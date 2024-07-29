@@ -28,14 +28,15 @@ import (
 )
 
 const (
-	senderMnemonic = "you seed phrase"
+	senderMnemonic = "your seed phrase"
 	chainID        = constant.ChainIDTest
 	addressPrefix  = constant.AddressPrefixTest
 	nodeAddress    = "full-node.testnet-1.coreum.dev:9090"
 )
 
 type Response struct {
-	Message string `json:"message"`
+	Message       string `json:"message"`
+	TransactionID string `json:"transaction_id"`
 }
 
 type CreateNFTClassRequest struct {
@@ -104,14 +105,17 @@ func createNFTClassHandler(w http.ResponseWriter, r *http.Request) {
 		Features:    []assetnfttypes.ClassFeature{assetnfttypes.ClassFeature_freezing},
 	}
 
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgIssueClass)
+	txResponse, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgIssueClass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Error broadcasting transaction:", err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(Response{Message: "NFT class created successfully"})
+	json.NewEncoder(w).Encode(Response{
+		Message:       "NFT class created successfully",
+		TransactionID: txResponse.TxHash,
+	})
 }
 
 func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
@@ -151,7 +155,7 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 		Data:    anyData,
 	}
 
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgMint)
+	txResponse, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgMint)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -168,7 +172,10 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(Response{Message: fmt.Sprintf("NFT minted successfully. Owner: %s", resp.Owner)})
+	json.NewEncoder(w).Encode(Response{
+		Message:       fmt.Sprintf("NFT minted successfully. Owner: %s", resp.Owner),
+		TransactionID: txResponse.TxHash,
+	})
 }
 
 func updateNFTDataHandler(w http.ResponseWriter, r *http.Request) {
@@ -212,14 +219,18 @@ func updateNFTDataHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgUpdateData)
+	txResponse, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgUpdateData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(Response{Message: "NFT data updated successfully"})
+	json.NewEncoder(w).Encode(Response{
+		Message:       "NFT data updated successfully",
+		TransactionID: txResponse.TxHash,
+	})
 }
+
 func setupClientContext() (client.Context, client.Factory, sdk.AccAddress, error) {
 	modules := module.NewBasicManager(
 		auth.AppModuleBasic{},

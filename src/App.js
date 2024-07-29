@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { createNFTClass, mintNFT, updateNFTData } from './api';
 import './index.css'; // Ensure this imports Tailwind CSS
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [activeSection, setActiveSection] = useState('createClass');
@@ -28,8 +30,10 @@ function App() {
     try {
       const response = await createNFTClass(classData);
       console.log('NFT class created:', response);
+      toast.success(`Transaction Successful! TxHash: ${response.transaction_id}`);
     } catch (error) {
       console.error('Error creating NFT class:', error);
+      toast.error('Error creating NFT class');
     }
   };
 
@@ -37,8 +41,10 @@ function App() {
     try {
       const response = await mintNFT(nftData);
       console.log('NFT minted:', response);
+      toast.success(`Transaction Successful! TxHash: ${response.transaction_id}`);
     } catch (error) {
       console.error('Error minting NFT:', error);
+      toast.error('Error minting NFT');
     }
   };
 
@@ -46,12 +52,12 @@ function App() {
     try {
       const response = await updateNFTData(updateData);
       console.log('NFT data updated:', response);
+      toast.success(`Transaction Successful! TxHash: ${response.transaction_id}`);
     } catch (error) {
       console.error('Error updating NFT data:', error);
+      toast.error('Error updating NFT data');
     }
   };
-
-
 
   const renderSection = () => {
     switch (activeSection) {
@@ -164,6 +170,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-cover bg-center flex flex-col items-center py-10" style={{ backgroundImage: 'url("/background.jpg")' }}>
+      <ToastContainer />
       <div className="w-full bg-green-800 text-white py-2">
         <marquee className="text-xl font-semibold">updateDynamicNftData</marquee>
       </div>
