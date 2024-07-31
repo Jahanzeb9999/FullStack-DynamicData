@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	senderMnemonic = "your seed phrase"
+	senderMnemonic = "rough olympic update gloom play squirrel license pride cup hazard onion effort"
 	chainID        = constant.ChainIDTest
 	addressPrefix  = constant.AddressPrefixTest
 	nodeAddress    = "full-node.testnet-1.coreum.dev:9090"
@@ -161,7 +161,6 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Query the owner of the newly minted NFT
 	nftClient := nft.NewQueryClient(clientCtx)
 	resp, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
@@ -278,3 +277,4 @@ func setupClientContext() (client.Context, client.Factory, sdk.AccAddress, error
 
 	return clientCtx, txFactory, senderAddress, nil
 }
+
