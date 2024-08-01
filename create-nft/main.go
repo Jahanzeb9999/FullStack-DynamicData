@@ -84,12 +84,18 @@ func main() {
 
 func createNFTClassHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreateNFTClassRequest
+	//  Declaring and Decoding the Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ctx := context.Background()
+	// clientCtx: A context for the client, used for making transactions.
+   //txFactory: A factory for creating transactions.
+   // senderAddress: The address of the sender, likely used to specify who is performing the transaction.
+   // err: An error value that will be non-nil if there was a problem setting up the client context.
+
 	clientCtx, txFactory, senderAddress, err := setupClientContext()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -105,12 +111,16 @@ func createNFTClassHandler(w http.ResponseWriter, r *http.Request) {
 		Features:    []assetnfttypes.ClassFeature{assetnfttypes.ClassFeature_freezing},
 	}
 
+
 	txResponse, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgIssueClass)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Error broadcasting transaction:", err)
 		return
 	}
+
+	// the response to ensure that the data we send back to the client is in a 
+	//format that can be easily understood and processe
 
 	json.NewEncoder(w).Encode(Response{
 		Message:       "NFT class created successfully",
@@ -119,7 +129,9 @@ func createNFTClassHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
+	// dec a req
 	var req MintNFTRequest
+	//  Declaring and Decoding the Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -133,6 +145,9 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonData := []byte(fmt.Sprintf(`{"name": "%s", "description": "%s"}`, req.Name, req.Description))
+	// Editors: Specifies who can edit this data item. In this example, 
+	//it includes DataEditor_owner, meaning the owner has the right to edit.
+    //Data: The actual content of the data item, stored in jsonData.
 	dataDynamic := assetnfttypes.DataDynamic{
 		Items: []assetnfttypes.DataDynamicItem{
 			{
@@ -141,6 +156,7 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
+	// serializing the dataDynamic instance
 	anyData, err := codectypes.NewAnyWithValue(&dataDynamic)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -156,16 +172,19 @@ func mintNFTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	txResponse, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(senderAddress), txFactory, msgMint)
+	//Send an HTTP Error Response(status code 500):
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	nftClient := nft.NewQueryClient(clientCtx)
+	// Querying the Owner of an NFT:
 	resp, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
 		Id:      req.NFTID,
 	})
+	 // If an error occurred during the query, the error will be handled.
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -229,7 +248,8 @@ func updateNFTDataHandler(w http.ResponseWriter, r *http.Request) {
 		TransactionID: txResponse.TxHash,
 	})
 }
-
+// setupClientContext function is designed to set up the client context, 
+//transaction factory, and sender address needed to interact with a blockchain network
 func setupClientContext() (client.Context, client.Factory, sdk.AccAddress, error) {
 	modules := module.NewBasicManager(
 		auth.AppModuleBasic{},
